@@ -1,0 +1,48 @@
+#!/usr/bin/env sh
+
+##############################################################################
+##
+##  Gradle start up script for UN*X
+##
+##############################################################################
+
+# Attempt to set APP_HOME
+# Resolve links: $0 may be a link
+PRG="$0"
+# Need this for relative symlinks.
+while [ -h "$PRG" ] ; do
+    ls=`ls -ld "$PRG"`
+    link=`expr "$ls" : '.*-> \(.*\)$'`
+    # if it is absolute
+    if expr "$link" : '/.*' > /dev/null; then
+        PRG="$link"
+    else
+        PRG=`dirname "$PRG"`"/$link"
+    fi
+done
+SAVED="`pwd`"
+cd "`dirname \"$PRG\"`/" >/dev/null
+APP_HOME="`pwd -P`"
+cd "$SAVED" >/dev/null
+
+die ( ) {
+    echo
+    echo "$*"
+    echo
+    exit 1
+}
+
+# Try to find docker executable
+which docker >/dev/null 2>&1 || die "ERROR: no 'docker' command could be found in your PATH.
+
+Please add docker to your the PATH environment variable"
+
+# Try to extract gradle distribution image name and tag
+test -f "$APP_HOME/gradle/wrapper/gradle-wrapper.properties" || die "ERROR: $APP_HOME/gradle/wrapper/gradle-wrapper.properties not found or it is not a regular file." 
+
+GRADLE_IMAGE=`grep -Eo 'distributionImage=(.*)' < gradle/wrapper/gradle-wrapper.properties | awk -F= '{print $2}'`
+
+# Check if $GRADLE_IMAGE exists
+docker images --filter=reference="$GRADLE_IMAGE" | grep gradle 2>&1 >/dev/null || docker pull $GRADLE_IMAGE
+
+docker run --rm -i -v "$PWD":/project -v "$HOME/.gradle":/gradle --env GRADLE_USER_HOME=/gradle -w /project --name gradle "$GRADLE_IMAGE" gradle $@  
